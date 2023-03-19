@@ -1,0 +1,151 @@
+@startuml E2
+autonumber
+
+actor User as "Пользователь"
+participant Frontend as "МП"
+participant Backend as "Бек-энд"
+
+== Создании сессии ==
+' Фронт-энд это то, что видит(и с чем взаимодействует) пользователь(в данном случае меню) 
+' Бек-энд это работа программы скрытая от глаз пользователя 
+
+User -> Frontend: Нажимает кнопку создания сессии
+activate User
+
+activate Frontend
+Frontend --> User: Возвращает форму
+deactivate Frontend
+
+alt Передумал делать сессию
+    User -> Frontend: Нажимает кнопку возвращения на главное меню
+
+    activate Frontend
+    Frontend -> Frontend: Закрывает окно настройки сессии
+    Frontend --> User: Возвращает на главное меню
+    deactivate Frontend
+
+  else Хочет заполнить форму
+    User -> User: Заполняет форму
+     User -[#blue]> Frontend: Нажимает "Всё охеренно - хочу уже играть!"
+    activate Frontend #blue
+    Frontend-[#blue]>Frontend: Инициализирует сессию и 1-ый раунд
+    User <-[#blue]- Frontend: Возвращает имя 1-го игрока, кнопку "начать ход" и форму настройки хода
+    alt Мы в онлайне?
+    Frontend -[#blue]>Backend: Отсылает данные сессии\хода\раунда
+    activate Backend #blue
+    Backend-[#blue]>Backend: Сохраняет данные сессии\хода\раунда
+    Frontend <--[#blue]Backend: Получает ответ
+    deactivate Backend
+    else Мы в офлайне
+    Frontend-[#blue]>Frontend: Сохраняет данные сессии\хода\раунда для будущей отправки (когда будет онлайн)
+    deactivate Frontend
+    end
+
+
+== Раунд сессии ==
+
+'в том числе и выбор сложности термина
+User -> User: Настраивает ход
+User -> Frontend: Нажимает кнопку "начать ход"
+
+activate Frontend
+Frontend -> Frontend: Создает ход
+
+User <-- Frontend: Показывает таймер и кнопку оканчания хода
+
+User -> User: Пользователь презентует термин
+Frontend-[#blue]>Frontend: <font color="blue">В фоне асинхронно шаг <b><font color="red">#10
+
+alt Время вышло
+
+  User <-- Frontend: Возвращает форму окончания хода(способ презентации и имя угадавшего игрока)
+  deactivate Frontend
+
+  User -> User: Переход к <b><font color = red>шагу 24 
+
+else Ход закончен до истечения времени
+  User -> Frontend: Нажимает кнопку окончания хода
+
+  activate Frontend
+  User <-- Frontend: Возвращает форму окончания хода(способ презентации и имя угадавшего игрока)
+  deactivate Frontend
+
+  User -> User: Заполняет форму окончания хода
+  User -> Frontend: Отправляет форму
+
+  activate Frontend
+  Frontend -> Frontend: Подсчитывает баллы
+  Frontend -> Frontend: Закрыть ход
+alt#blue  Есть еще несходившие игроки 
+  User <-- Frontend: Возвращает результаты хода, имя следующего игрока и кнопку начать ход и форму настройки хода
+  User -> User: Переход к <b><font color = red>шагу 14
+  Frontend-[#blue]>Frontend: <font color="blue">В фоне асинхронно шаг <b><font color="red">#10
+
+  else Все игроки сходили
+  Frontend -> Frontend: Закрыть раунд
+  User <[#blue]-- Frontend: Возвращает результаты раунда, запрашивает "Херачим дальше?" или "Нафиг-нафиг, хотим домой!"
+  
+  Frontend-[#blue]>Frontend: <font color="blue">В фоне асинхронно шаг <b><font color="red">#10
+deactivate Frontend
+
+alt#blue Фигачим
+User -[#blue]> Frontend++#blue: Нажимает "Хотим ещё"
+Frontend -[#blue]> Frontend: Создаёт новый раунд
+  User <[#blue]-- Frontend: Возвращает имя 1-го игрока, кнопку "начать ход" и форму настройки хода
+  User -> User: Переход к <b><font color = red>шагу 14
+  Frontend-[#blue]>Frontend--: <font color="blue">В фоне асинхронно шаг <b><font color="red">#10
+
+else Нафиг
+User -[#blue]> Frontend++#blue: Нажимает "Нафиг-нафиг"
+Frontend -[#blue]> Frontend: Закрывает сессию
+  User <[#blue]-- Frontend: Показывает результаты игры, предлагает начать новую игру, поделиться результатами, получить промо-код или выйти в главное меню
+  Frontend-[#blue]>Frontend--: <font color="blue">В фоне асинхронно шаг <b><font color="red">#10
+alt Жаждет поделиться
+
+User -[#blue]> Frontend++#blue: Нажимает share
+Frontend -[#blue]> Frontend: Шэринг-логика
+Frontend --[#blue]> User--: Сообщить об успехе\неудаче шэринга
+  ' В глубоком сиквенсе доработать пункты результатов
+
+else Передумал и хочет ещё
+   
+  User -> User: Переход к <b><font color = red>шагу 1
+else Хочет получить промо-код от нашей офигенной игры
+User -[#blue]> User: Вносит имейл выигравшего игрока
+User -[#blue]> Frontend++#blue: Нажимает "Гоните промо-код!"
+Frontend -[#blue]> Frontend: Генерирует промо-код
+Frontend --[#blue]> User: Просит на всякие пожарные сфоткать промо-код (вдруг не придёт по почте)
+alt Мы в онлайне
+Frontend -[#blue]> Backend++#blue: Просит отправить промо-код
+Backend -[#blue]> Backend: Отсылает промо-код
+Backend --[#blue]> Frontend--: Сообщить об успехе\неудаче отправки
+else Мы в офлайне
+Frontend -[#blue]> Frontend: Сохраняет промо-код для будущей отправки
+deactivate Frontend
+  note right #blue: А теперь придите к первому эпику и внесите правки - \nесли при открытии приложения есть сохраненные данные\n и есть сеть - отправляем их в цикле\n\nплюс отдельный юз-кейс - появилась сеть, тут же отправили то что накопилось за время офлайна\nне оставляем Марину без статистики!
+end
+else Выход в главное меню
+
+  User -> Frontend++: Нажимает кнопку "выйти"
+  Frontend -> User--: Перебрасывает игрока в главное меню
+  deactivate User
+
+end
+end
+
+  end
+  'предусмотреть альтернативу последний игрок или нет
+  'предусмотреть пропуск хода (если игрок ушёл)
+
+
+
+
+end
+
+
+
+end
+
+
+
+@enduml

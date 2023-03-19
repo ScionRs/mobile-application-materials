@@ -1,0 +1,128 @@
+@startuml
+
+'abstract class "Пользователь" as User  {
+'    взаимодействует с приложением
+'}
+' в терминах обозначить пользователя игроком
+
+
+class "Сессия" as Session {
+    __
+    Внутренние атрибуты класса
+    ..
+    + id: int [1]
+    + timingTurn: int [1]
+    + startedAt: DateTime [1]
+    + finishedAt: Datetime [0..1] 
+    + winners: Player [0..*]
+    + <font color="red"> description: String [1] 
+}
+' добавить начать ли новый раунд или завершить сессию
+
+class "Раунд" as Round {
+    + order: int [1]
+    + startedAt: DateTime [1]
+    + finishedAt: Datetime [0..1] 
+    + sessionId: Session [1]
+    + leaders: Player [0..*]
+}
+
+class "Ход" as Turn {
+    Атрибуты заполняемые пользователем
+    ..
+    + order: int [1]
+    + selectCategory: Category [1]
+    + startedAt: DateTime [1]
+    + finishedAt: Datetime [0..1] 
+    + difficulty: Difficulty [1]
+    + presentationType: Presentation [0..1]
+    + presenterPlayer: Player [1]
+    + guessedPlayer: Player [0..1]
+    + roundId: Раунд [1]
+    __
+    Внутренние атрибуты класса
+    ..
+    + score: int [0..1] - очки за ход
+    
+}
+
+class "Промокод" as Promocode{
+    + id: int [1]
+    + email: String [1]
+    + createdAt: DateTime [1]
+    + sessionId: int [1]
+    + playerOrder: int [1]
+    + sessionScore: int [1]
+    + activationAt: DateTime [0..1]
+    + canceledAt: DateTime [0..1]
+    + expiredAt: DateTime [0..1]
+    + expiresAt: DateTime [1]
+    + status: Status [1]
+    + sentAt: DateTime [0..1]
+    + <font color="red"> description: String [1] 
+}
+
+enum "Статус промокода" as Status {
+    GENERATED
+    SENT
+    ACTIVATED
+    EXPIRED
+    CANCELLED 
+}
+
+enum Presentation as "Тип презентации" {
+    WORD
+    DRAW
+    SHOW
+}
+
+enum Difficulty as "Уровень сложности" {
+    USER
+    SPEC
+    EXPERT
+}
+
+class "Игрок" as Player {
+    + order: int [1]
+    + sessionId: Session [1]
+    + name: String [1]
+    + promocode: Promocode [0..1]
+}
+
+'class "Карточка" as Card {
+'    + category: Category
+'
+'}
+'
+'class "Категория" as Category {
+'    + id: int
+'    + name: String
+'}
+
+class "Категория" as Category {
+    + id: int [1]
+    + name: String [1]
+}
+
+
+' Статус GUESSER - изначальный статус всех игроков
+' Статус PRESENTER - статус игрока презентующего термин 
+' Добавить методы в будущем
+
+Promocode "0..*" --- "1" Status
+Session "1" o-- "3..*" Player
+Promocode "0..1" --- "1" Player
+'User --|> Turn
+'User  --|> Session
+Turn "0..*" --- "1..2" Player
+Category "1" --- "0..*" Turn
+' Эта связь связывает ход с набором игроков: 
+' презентующий и отгадавший если такой найдется
+Turn "0..*" --- "1" Presentation
+Round "1" o-- "0..*" Turn 
+Turn "0..*" --- "1" Difficulty 
+'Category "1" --- "0..*" Card 
+Round "0..*" --- "0..*" Player
+Session "1" o-- "0..*" Round #LightSlateGray
+
+@enduml

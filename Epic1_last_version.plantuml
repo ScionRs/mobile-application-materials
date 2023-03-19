@@ -1,0 +1,109 @@
+'  E2US2 
+'    Я как пользователь
+'    Хочу настраивать количество игроков в сессии 
+'    Чтобы видеть результаты игры и персональный результат каждого игрока
+'  E2US3    
+'    Я как пользователь
+'    Хочу предоставлять возможность игрокам вводить свои имена
+'    Чтобы понимать кто победил
+
+@startuml E2
+autonumber
+
+actor User as "Пользователь"
+participant Frontend as "МП"
+participant Backend as "Бек-энд"
+
+== Берем данные с бэка ==
+User -> Frontend: Запускает приложение
+activate User
+activate Frontend
+Frontend -> Frontend: Проверка на интернет соединение
+
+alt Соединения нет
+
+    Frontend -> User: <b><font color = red> Переход к шагу 9
+    
+else Соединение есть
+
+    Frontend -> Backend: Запрос на загрузку данных
+    activate Backend
+    Backend -> Frontend: Возвращение актуальных данных
+    deactivate Backend
+end
+
+Frontend -> Frontend: Сравнение старых и новых данных о правилах игры
+'Мы решили, что уведомлять нужно только о изменении в правилах игры
+
+alt Данные отличаются 
+
+    Frontend -> User: Выводит уведомление об изменеии в правилах игры
+
+else Данные иднтичны
+
+    Frontend -> User: <b><font color = red> Переход к шагу 9
+
+end
+deactivate Frontend
+deactivate User 
+
+== Ознакомиться с правилами игры ==
+User -> Frontend: Открывает правила игры
+activate User
+activate Frontend
+User <- Frontend: Возврат правил пользователю 
+deactivate Frontend
+deactivate User 
+
+== Оставить обратную связь ==
+User -> Frontend: Хочет оставить обратную связь
+activate User
+activate Frontend
+User <- Frontend: Возврат формы для заполнения
+alt "Хочет заполнить форму обратной связи"
+User -> Frontend: Заполняет форму и отсылает
+Frontend -> Backend: Запрос
+User <- Frontend: Благодарит за оставленный отзыв и возвращает на главный экран
+else "Хочет выйти из формы заполнения"
+User -> Frontend: Хочет выйти из формы
+User <- Frontend: Возвращение на главный экран
+deactivate Frontend
+deactivate User 
+end
+
+== Посмотреть информацию о разработчиках приложения ==
+User -> Frontend: Хочет посмотреть информацию о разработчиках приложения
+activate Frontend
+Frontend -> Backend: Запрос
+activate Backend
+Frontend <- Backend: Ответ
+deactivate Backend
+User <- Frontend: Возврат информации о разработчиках приложения
+deactivate Frontend
+
+== Посмотреть информацию о создателях бумажной игры ==
+User -> Frontend: Хочет посмотреть информацию о создателях бумажной игры
+activate Frontend
+Frontend -> Backend: Запрос
+activate Backend
+Frontend <- Backend: Ответ
+deactivate Backend
+User <- Frontend: Возврат информации о создателях бумажной игры
+deactivate Frontend
+
+== Сменить язык ==
+User -> Frontend: Хочет сменить язык
+activate Frontend
+Frontend -> Backend: Запрос
+activate Backend
+Frontend <- Backend: Ответ
+deactivate Backend
+User <- Frontend: Смена языка
+deactivate Frontend
+
+
+
+User -> Frontend: Хочет посмотреть дополнительную информацию о терминах
+User <- Frontend: Переход на на страницу вебсайта с термином
+
+@enduml

@@ -1,0 +1,213 @@
+@startuml
+
+class Session #LightPink {
+    + id: int [1]
+    + timingTurn: int [1]
+    + startedAt: DateTime [1]
+    + finishedAt: Datetime [0..1] 
+    + winners: Player [0..*]
+    + <font color="blue"> description: String [1] 
+}
+
+class Round #LightPink {
+    + order: int [1]
+    + startedAt: DateTime [1]
+    + finishedAt: Datetime [0..1] 
+    + sessionId: Session [1]
+    + leaders: Player [0..*]
+}
+
+class Turn #LightPink {
+    + order: int [1]
+    + selectCategory: Category [1]
+    + startedAt: DateTime [1]
+    + finishedAt: Datetime [0..1] 
+    + difficulty: Difficulty [1]
+    + presentationType: Presentation [0..1]
+    + presenterPlayer: Player [1]
+    + guessedPlayer: Player [0..1]
+    + roundId: Раунд [1]
+    + score: int [0..1] - очки за ход 
+}
+
+note top of Promocode: 1) Promocode after test is given only if test link is shared\n2) Optional used according to promocode origin
+
+class Promocode #LightCyan{
+    + id: int [1]
+    + email: String [1]
+    + createdAt: DateTime [1]
+    + sessionId: int [0..1]
+    + playerOrder: int [0..1]
+    + sessionScore: int [0..1]
+    + prospectTestResultId: UUID [0..1]
+    + activationAt: DateTime [0..1]
+    + canceledAt: DateTime [0..1]
+    + expiredAt: DateTime [0..1]
+    + expiresAt: DateTime [1]
+    + status: Status [1]
+    + sentAt: DateTime [0..1]
+    + <font color="blue"> description: String [0..1]
+    + origin: Origin [1] 
+}
+
+enum Origin #LightCyan {
+    TEST
+    GAME 
+}
+
+enum Status #LightCyan {
+    GENERATED
+    SENT
+    ACTIVATED
+    EXPIRED
+    CANCELLED 
+}
+
+enum Presentation #LightPink {
+    WORD
+    DRAW
+    SHOW
+}
+
+enum Difficulty #LightPink {
+    USER
+    SPEC
+    EXPERT
+}
+
+class Player #LightPink {
+    + order: int [1]
+    + sessionId: Session [1]
+    + name: String [1]
+    + promocode: Promocode [0..1]
+}
+
+class Category #LightCyan {
+    + id: UUID [1]
+    + name: String [1]
+    + enabled: boolean [1]
+}
+
+Promocode "0..*" --- "1" Status
+Session "1" o-- "3..*" Player
+Promocode "0..1" --right- "1" Player
+Turn "0..*" --left- "1..2" Player
+Category "1" --- "0..*" Turn
+Turn "0..*" --- "1" Presentation
+Round "1" o-- "0..*" Turn 
+Turn "0..*" --- "1" Difficulty 
+Round "0..*" --- "0..*" Player
+Session "1" o-- "0..*" Round #LightSlateGray
+
+class Prospect #LightYellow{
+ + ID: UUID [1]
+ + email: String [0..1]
+}
+
+class ProspectTestResult #LightYellow{
+ + ID: UUID [1]
+ + test: Test [1]
+ + testStartedAt: DateTime [1]
+ + testFinishedAt: [0..1]
+ + testScore: int [0..1]
+ + prospect: Prospect [1]
+}
+
+Promocode "0..1" --* "0..1" ProspectTestResult
+ProspectTestResult "1..n" --o "1" Prospect
+
+class User #LightYellow{
+ + ID: UUID [1]
+ + activated: boolean [1]
+ + password: String [1]
+ + email: String [1]
+ + createdAt: DateTime [1]
+ + updatedAt: DateTime [0..1]
+ + roles: Role [1..n]
+}
+
+class Role #LightYellow{
+  + ID: UUID [1]
+  + name: String [1]  
+}
+
+class Term #LightYellow{
+ + ID: UUID [1]
+ + checkedByExpert: Expert [0..1]
+ + termContent: String [1]
+ + references: String [0..n]
+ + enabled: boolean [1]
+ + category:category[1]
+ + tags: Tag [1..n]
+ + slug: String [1]
+--
+}
+
+class Expert #LightYellow{
+ + ID: UUID [1]
+ + name: String [1]
+ + surname: String [1]
+ + description: String [1]
+ + avatar: Media [1]
+ + enabled: boolean [1]
+--
+}
+
+class Tag #LightYellow{
+ + ID: UUID [1]
+ + Name: string[1]
+ + enabled: boolean [1]
+ --
+}
+
+
+class Test #LightYellow{
+ + ID: UUID [1]
+ + Name: string[1]
+ + questions: question [1..n]
+}
+
+class Reccomendation #LightYellow{
+ + ID: UUID [1]
+ + content: String[1]
+ + test: Test [1]
+ + scoreStartRange: int [1]
+ + scoreEndRange: int [1]
+}
+
+class Question #LightYellow{
+    + ID: UUID [1]
+    + questionContent: string[1]
+    + presentationType: PresentationType [1]
+}
+
+class Answer #LightYellow{
+    + ID: UUID [1]
+    + answerContent: string[1]
+    + isCorrect: boolean[1]
+    + answerScore: int[1]
+    + question: Question [1]
+}
+
+enum PresentationType #LightYellow{
+    OPEN
+    EMPTY_SPACE
+    CHOOSE
+    MOVE
+    ROPE
+    <font color="blue">MORE!!!
+}
+
+User "0..n" --up- "1..n" Role
+ProspectTestResult "0..n" --o "1" Test
+Expert "0..1" --- "0..n" Term
+Term "0..n" --o "1" Category
+Term "0..n" --o "1..n" Tag
+Test "0..n" o-- "1..n" Question
+User "0..n" -- "0..n" Promocode
+Origin "1" --- "0..n" Promocode
+Reccomendation "0..n" --- "1" Test
+Answer "1..n" --* "1" Question
+Question "0..n" --- "1" PresentationType
+
+@enduml
